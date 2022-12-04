@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class UnitsLauncher : Targetable
+public class UnitsLauncher : Entity
 {
     [SerializeField] private UnitProgressBar _reloadBar;
     [SerializeField] private GameObject _spawnUnit;

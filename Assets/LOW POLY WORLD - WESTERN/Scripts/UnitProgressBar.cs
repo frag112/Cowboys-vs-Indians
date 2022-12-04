@@ -12,9 +12,20 @@ public class UnitProgressBar : MonoBehaviour
                    private float _currentValue;
     public float MaxValue
     {
+        set
+        {
+            _maxValue = value;
+        }
         get
         {
             return _maxValue;
+        }
+    }
+    public float StartValue
+    {
+        set
+        {
+            _startValue = value;
         }
     }
   public float Value
