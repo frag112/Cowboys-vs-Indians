@@ -9,8 +9,11 @@ public class Entity : MonoBehaviour
 
     private void Start()
     {
-        _healthBar.MaxValue = _health;
-        _healthBar.StartValue = _health;
+        if (_healthBar)
+        {
+            _healthBar.MaxValue = _health;
+            _healthBar.StartValue = _health;
+        }
     }
     public void TakeDamage(float damage)
     {

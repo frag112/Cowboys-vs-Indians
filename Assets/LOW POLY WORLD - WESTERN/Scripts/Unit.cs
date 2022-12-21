@@ -9,13 +9,18 @@ public class Unit : Entity
     [Header("Unit Settings")]
     [Tooltip("GameObjects with this tag will be attacked")]
     [SerializeField] protected string filter = "Player";
+    [Tooltip("GameObjects on this layer will be attacked")]
+    [SerializeField] protected LayerMask mask;
     [SerializeField] protected float _damage;
+    [SerializeField] protected float _recoil;
+    [Tooltip("set as weapon range if aplicable, otherwise do not touch")]
+    [SerializeField] protected float _stopHere = 1f;
     [Header("Components")]
     [SerializeField] protected NavMeshAgent _agent;
     [SerializeField] protected Animator _animator;
 
-    [SerializeField] protected GameObject _target;
-    protected bool _attacking = false;
+    protected GameObject _target;
+    protected bool _walking = false;
 
 
 
@@ -39,18 +44,34 @@ public class Unit : Entity
     protected void MoveToTarget()
     {
         _agent.isStopped = false;
-        _animator.SetBool("Attack", false);
         StartCoroutine(Walk());
     }
-    protected IEnumerator Walk()
+    protected IEnumerator Walk() 
     {
-        while ((_target != null) && (Vector3.Distance(transform.position, _target.transform.position) > 1.0f))
+        _walking = true;
+        while ((_target != null) && ((int)Vector3.Distance(transform.position, _target.transform.position) > _stopHere))
         {
             _agent.destination = _target.transform.position;
             yield return new WaitForSeconds(1);
         }            
     }
-    void OnDrawGizmos()
+
+    protected virtual IEnumerator VisionCast(float recoil)
+    {
+        while (gameObject.activeSelf)
+        {
+            if (!_target)
+            {
+                _target = SearchForTarget();
+            }
+            yield return new WaitForSeconds(recoil);
+        }
+    }
+    private void OnDisable()
+    {
+        StopAllCoroutines();
+    }
+    /*void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
 
@@ -60,15 +81,14 @@ public class Unit : Entity
         //Gizmos.DrawCube(transform.position, new Vector3(2f, 1f, .5f));
         Gizmos.DrawSphere(transform.position, 1f);
 
-    }
-    virtual protected void VisionCast()
-    {
+    }*/
 
-    }
 
     protected override void Die()
     {
         gameObject.GetComponent<Collider>().enabled = false;
+        gameObject.tag = "Deads";
+        gameObject.layer = 0;
         StopAllCoroutines();
         _agent.isStopped = true;
         _animator.SetBool("Death", true);

@@ -1,54 +1,56 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class BasicMelee : Unit
 {
-    [SerializeField] LayerMask mask;
-    void Start()
+    void OnEnable()
     {
-       _target = SearchForTarget();
-        MoveToTarget();
-        StartCoroutine(Attack());
-    }
-    private IEnumerator Attack()
-    {
-        while (!_attacking)
-        {
-            VisionCast();
-            yield return new WaitForSeconds(2f);
-        }
+        StartCoroutine(VisionCast(_recoil));
 
     }
-    void Update()
+    protected  override IEnumerator  VisionCast ( float recoil)
     {
-        if (_target == null)
+        //_watching = true;
+        while (gameObject.activeSelf)
         {
-            _target = SearchForTarget();
-            return;
-        }
-  /*      if (!_attacking)
-        {
-            MoveToTarget();
-        }*/
-    }
-    protected override void  VisionCast()
-    {
-        var targetsCanAttack = Physics.BoxCastAll(new Vector3(transform.localPosition.x, transform.localPosition.y, transform.localPosition.z + 1f), new Vector3(.2f, .3f, 1f), transform.forward, Quaternion.identity, 1f, mask);
-        // select random from all colliders and start hitting courotine. hit it til it is dead. ONLY THEN cast another vision, and hit first target
-
-        foreach (var target in targetsCanAttack)
-        {
-            if (target.transform.CompareTag(filter) && target.transform.GetComponent<Entity>())
+            if (!_target)
             {
-                _attacking = true;
-                _animator.SetBool("Attack", true);
+                _target = SearchForTarget();
+            }
+
+            var targetsCanAttack = Physics.BoxCastAll(new Vector3(transform.localPosition.x, transform.localPosition.y, transform.localPosition.z + 1f), new Vector3(.2f, .3f, 1f), transform.forward, Quaternion.identity, 1f, mask);
+
+            List<RaycastHit> validTargets = new List<RaycastHit>();
+
+            foreach (var target in targetsCanAttack)
+            {
+                if (target.transform.CompareTag(filter) && target.transform.GetComponent<Entity>())
+                {
+                    validTargets.Add(target);
+                }
+            }
+            if (validTargets.Count > 0)
+            {
                 _agent.isStopped = true;
                 StopCoroutine(Walk());
-                target.transform.GetComponent<Entity>().TakeDamage(_damage);
-                Debug.Log(target.transform.name + " taking hit - " + _damage);
+                _walking = false;
+                _animator.SetTrigger("Attack");
+                transform.LookAt(validTargets[0].transform);
+                validTargets[0].transform.GetComponent<Entity>().TakeDamage(_damage);
+                Debug.Log(validTargets[0].transform.name + " taking hit - " + _damage);
+                yield return new WaitForSeconds(recoil);
+
             }
+            else
+            {
+                if (!_walking)
+                {
+                    MoveToTarget();
+                }
+                yield return new WaitForSeconds(1f);
+            }
+
         }
-        _attacking = false;
     }
 }
